@@ -16,7 +16,7 @@ fn solve_part_1(input: &str) -> Result<i32, Box<dyn Error>> {
     let mut left = vec![];
     let mut right = vec![];
 
-    for line in input.split('\n') {
+    for line in input.lines() {
         let (left_num, right_num) = parse_line(line)?;
 
         left.push(left_num);
@@ -37,7 +37,7 @@ fn solve_part_2(input: &str) -> Result<i32, Box<dyn Error>> {
     let mut right = HashMap::new();
     let mut answer = 0;
 
-    for line in input.split('\n') {
+    for line in input.lines() {
         let (left_num, right_num) = parse_line(line)?;
 
         answer += left_num * right.get(&left_num).unwrap_or(&0);
