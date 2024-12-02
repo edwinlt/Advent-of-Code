@@ -1,10 +1,10 @@
-use std::{io, fs, iter};
+use std::{io, iter};
 use std::error::Error;
 use std::collections::HashMap;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let file = fs::File::open("inputs/day01.txt")?;
-    let input = io::read_to_string(file)?;
+    let stdin = io::stdin().lock();
+    let input = io::read_to_string(stdin)?;
     assert!(!input.is_empty(), "Input was empty!");
 
     println!("Part 1: {}", solve_part_1(&input)?);
