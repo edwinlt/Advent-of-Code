@@ -32,32 +32,25 @@ fn solve_part_2(grid: &[&[u8]]) -> usize {
         return 0;
     };
 
+    let mut answer = 0;
+
     let mut checked_spaces = HashSet::new();
-    let mut new_obstacle_candidates = HashSet::new();
-
-    for (i, j, dir) in WalkIterator::new(grid, start, Direction::Up) {
-        let coords_in_front = dir.offset_coords(i, j);
-        let (i2, j2) = coords_in_front;
-
-        match grid.get(i2).map(|row| row.get(j2)).flatten() {
-            None | Some(&b'#') | Some(&b'^') => continue,
-            _ => {}
+    checked_spaces.insert(start);
+    
+    let mut prev = start;
+    for (i, j, dir) in WalkIterator::new(grid, start, Direction::Up).skip(1) {
+        if checked_spaces.insert((i, j)) {
+            let branched_path = WalkIterator::new(grid, prev, dir)
+                .with_added_obstacle((i, j));
+            if branched_path.is_inifinite_loop() {
+                answer += 1;
+            }
         }
 
-        if checked_spaces.contains(&coords_in_front) {
-            continue;
-        }
-        checked_spaces.insert(coords_in_front);
-
-        if WalkIterator::new(grid, (i, j), dir)
-            .with_added_obstacle(coords_in_front)
-            .is_inifinite_loop()
-        {
-            new_obstacle_candidates.insert(coords_in_front);
-        }
+        prev = (i, j);
     }
 
-    new_obstacle_candidates.len()
+    answer
 }
 
 fn find_start(grid: &[&[u8]]) -> Option<(usize, usize)> {
