@@ -24,16 +24,14 @@ fn solve_part_1(input: &PuzzleInput) -> usize {
         for (j, &cell) in row.iter().enumerate() {
             areas[cell] += 1;
 
-            let perim = &mut perimeters[cell];
-            *perim += 4;
-
             let left = j.overflowing_sub(1).0;
             let up = i.overflowing_sub(1).0;
             let neighbors = [(i, j + 1), (i, left), (i + 1, j), (up, j)];
 
+            let perim = &mut perimeters[cell];
             for (i2, j2) in neighbors {
-                if i2 < grid.len() && j2 < grid[i2].len() && grid[i2][j2] == cell {
-                    *perim -= 1;
+                if i2 >= grid.len() || j2 >= grid[i2].len() || grid[i2][j2] != cell {
+                    *perim += 1;
                 }
             }
         }
