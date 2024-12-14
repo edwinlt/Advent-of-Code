@@ -7,58 +7,62 @@ fn main() -> Result<(), Box<dyn Error>> {
     let input = parse_input(stdin)?;
 
     println!("Part 1: {}", solve_part_1(&input));
-    // println!("Part 2: {}", solve_part_2(&input));
+    println!("Part 2: {}", solve_part_2(&input));
     Ok(())
 }
 
 fn solve_part_1(machines: &[ClawMachine]) -> i64 {
-    let mut answer = 0;
-
-    for machine in machines {
-        let (px, py) = machine.prize;
-        let (ax, ay) = machine.button_a;
-        let (bx, by) = machine.button_b;
-
-        let mut min_tokens = None;
-        for a in 0 ..= 100 {
-            let x = a * ax;
-            let y = a * ay;
-
-            if ax > px || ay > py {
-                break;
-            }
-
-            let rx = px - x;
-            let ry = py - y;
-            if rx % bx != 0 || ry % by != 0 {
-                continue;
-            }
-            if bx == 0 || by == 0 {
-                continue;
-            }
-            
-            let b = rx / bx;
-            if b != ry / by {
-                continue;
-            }
-
-            if min_tokens.is_some() {
-                min_tokens = min_tokens.min(Some(3*a + b));
-            } else {
-                min_tokens = Some(3*a + b);
-            }
-        }
-
-        answer += min_tokens.unwrap_or(0);
-    }
-    answer
+    machines.iter()
+        .map(tokens_to_win)
+        .filter_map(|opt| opt)
+        .sum()
 }
+
+fn solve_part_2(machines: &[ClawMachine]) -> i64 {
+    let p = 10_000_000_000_000;
+    machines.iter()
+        .map(|machine| machine.adjust_prize_location(p, p))
+        .map(|machine| tokens_to_win(&machine))
+        .filter_map(|opt| opt)
+        .sum()
+}
+
+fn tokens_to_win(machine: &ClawMachine) -> Option<i64> {
+    let (p_x, p_y) = machine.prize;
+    let (a_x, a_y) = machine.button_a;
+    let (b_x, b_y) = machine.button_b;
+
+    // Solve for a and b
+    // p_x = (a * a_x) + (b * b_x)
+    // p_y = (a * a_y) + (b * b_y)
+    let det = (a_x * b_y) - (a_y * b_x);
+    let a = (p_x * b_y) + (p_y * -b_x);
+    let b = (p_x * -a_y) + (p_y * a_x);
+    if det == 0 || a % det != 0 || b % det != 0 {
+        return None;
+    }
+
+    let a = a / det;
+    let b = b / det;
+    Some(3*a + b)
+}
+
 
 #[derive(Debug, Default, Clone, Copy)]
 struct ClawMachine {
     button_a: (i64, i64),
     button_b: (i64, i64),
     prize: (i64, i64),
+}
+
+impl ClawMachine {
+    fn adjust_prize_location(self, dx: i64, dy: i64) -> Self {
+        let (px, py) = self.prize;
+        Self {
+            prize: (px+dx, py+dy),
+            ..self
+        }
+    }
 }
 
 fn parse_input(input: impl io::BufRead) -> Result<Vec<ClawMachine>, Box<dyn Error>> {
