@@ -1,13 +1,14 @@
 use std::io;
 use std::error::Error;
 use regex::Regex;
+use std::collections::HashSet;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let stdin = io::stdin().lock();
     let input = parse_input(stdin)?;
 
     println!("Part 1: {}", solve_part_1(&input));
-    // println!("Part 2: {}", solve_part_2(&input));
+    println!("Part 2: {}", solve_part_2(&input));
     Ok(())
 }
 
@@ -40,6 +41,41 @@ fn solve_part_1(robots: &[Robot]) -> usize {
     }
 
     quadrants.iter().product()
+}
+
+fn solve_part_2(robots: &[Robot]) -> usize {
+    fn flood_fill(out: &mut HashSet<(i64, i64)>, s: &HashSet<(i64, i64)>, pos: (i64, i64)) -> usize {
+        if !s.contains(&pos) || !out.insert(pos) {
+            return 0;
+        }
+        
+        1 + flood_fill(out, s, (pos.0+1, pos.1))
+          + flood_fill(out, s, (pos.0-1, pos.1))
+          + flood_fill(out, s, (pos.0, pos.1+1))
+          + flood_fill(out, s, (pos.0, pos.1-1))
+    }
+    
+    const CHRISTMAS_TREE_MIN_SIZE: usize = 100;
+    for t in 1.. {
+        let mut locations = HashSet::new();
+
+        for robot in robots {
+            let t = t as i64;
+            let x = (robot.pos.0 + t*robot.vel.0).rem_euclid(WIDTH);
+            let y = (robot.pos.1 + t*robot.vel.1).rem_euclid(HEIGHT);
+            locations.insert((x, y));
+        }
+
+        let mut filled = HashSet::new();
+        for (i, j) in locations.iter() {
+            let size = flood_fill(&mut filled, &locations, (*i, *j));
+            if size >= CHRISTMAS_TREE_MIN_SIZE {
+                return t;
+            }
+        }
+    }
+    
+    unreachable!()
 }
 
 #[derive(Debug, Clone, Copy)]
