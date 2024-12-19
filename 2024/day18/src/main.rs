@@ -15,31 +15,43 @@ const MAX_X: usize = 70;
 const MAX_Y: usize = 70;
 
 fn solve_part_1(coords: &[(usize, usize)]) -> u64 {
-    let mut blocked = [[false; MAX_Y+1]; MAX_X+1];
-    for (x, y) in coords.iter().take(1024) {
-        blocked[*x][*y] = true;
+    let mut map = [[usize::MAX; MAX_Y+1]; MAX_X+1];
+    for (i, (x, y)) in coords.iter().enumerate().take(1024) {
+        map[*x][*y] = i;
     }
-    bfs(&blocked, (0, 0), (MAX_X, MAX_Y)).unwrap()
+    bfs(&map, 1024).unwrap()
 }
 
 fn solve_part_2(coords: &[(usize, usize)]) -> String {
-    let mut blocked = [[false; MAX_Y+1]; MAX_X+1];
-    for (x, y) in coords.iter() {
-        blocked[*x][*y] = true;
-        if bfs(&blocked, (0, 0), (MAX_X, MAX_Y)).is_none() {
-            return format!("{x},{y}");
+    let mut map = [[usize::MAX; MAX_Y+1]; MAX_X+1];
+    for (i, (x, y)) in coords.iter().enumerate() {
+        map[*x][*y] = i;
+    }
+    
+    let mut lo = 0;
+    let mut hi = coords.len();
+    while lo < hi {
+        let mid = lo + (hi - lo) / 2;
+        if let Some(_) = bfs(&map, mid+1) {
+            lo = mid+1;
+        } else {
+            hi = mid;
         }
     }
 
-    String::from("No answer found")
+    if let Some((x, y)) = coords.get(lo) {
+        format!("{x},{y}")
+    } else {
+        String::from("No answer found")
+    }
 }
 
-fn bfs(blocked: &[[bool; MAX_X+1]; MAX_Y+1], start: (usize, usize), end: (usize, usize)) -> Option<u64> {
+fn bfs(map: &[[usize; MAX_Y+1]; MAX_X+1], t: usize) -> Option<u64> {
     let mut visited = [[false; MAX_Y+1]; MAX_X+1];
     visited[0][0] = true;
 
     let mut queue = VecDeque::new();
-    queue.push_back((start.0, start.1, 0));
+    queue.push_back((0usize, 0usize, 0));
 
     while let Some((x, y, dist)) = queue.pop_front() {
         let neighbors = [
@@ -50,10 +62,13 @@ fn bfs(blocked: &[[bool; MAX_X+1]; MAX_Y+1], start: (usize, usize), end: (usize,
         ];
 
         for (nx, ny) in neighbors {
-            if nx > MAX_X || ny > MAX_Y || blocked[nx][ny] || visited[nx][ny] {
+            if nx > MAX_X || ny > MAX_Y || visited[nx][ny] {
                 continue;
             }
-            if (nx, ny) == end {
+            if map[nx][ny] < t {
+                continue;
+            }
+            if (nx, ny) == (MAX_X, MAX_Y) {
                 return Some(dist+1);
             }
             visited[nx][ny] = true;
